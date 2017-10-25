@@ -9,10 +9,11 @@
     {
         [Required]
         [Title]
+        [Length(minLength: 3, maxLength: 100)]
         public string Title { get; set; }
 
         [Required]
-        [Description]
+        [Length(minLength: 20, maxLength: 500)]
         public string Description { get; set; }
         
         [ThumbnailUrl]
@@ -25,7 +26,7 @@
         public double Size { get; set; }
 
         [Required]
-        [VideoId]
+        [Length(minLength: 11, maxLength: 11)]
         public string VideoId { get; set; }
 
         public DateTime ReleaseDate { get; set; }

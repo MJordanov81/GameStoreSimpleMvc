@@ -31,5 +31,7 @@
         Game GetById(int id);
 
         IEnumerable<GameListingAdminModel> All();
+
+
     }
 }

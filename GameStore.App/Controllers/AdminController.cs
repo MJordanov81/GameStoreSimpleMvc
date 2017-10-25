@@ -2,44 +2,31 @@
 {
     using Data.Models;
     using Models.Games;
-    using Services;
     using Services.Contracts;
+    using SimpleMvc.Framework.Attributes;
     using SimpleMvc.Framework.Attributes.Methods;
     using SimpleMvc.Framework.Contracts;
+    using StaticData.Constants;
     using System.Linq;
 
     public class AdminController : BaseController
     {
-        public const string GameError = "<p>Check your form for errors.</p><p>Title has to begin with uppercase letter and has length between 3 and 100 symbols (inclusive).</p><p>Price must be a positive number with precision up to 2 digits after floating point.</p><p>Size must be a positive number with precision up to 1 digit after floating point.</p><p>Videos should only be from YouTube.</p><p>Thumbnail URL should be a plain text starting with http://, https://.</p><p>Description must be at least 20 symbols.</p>";
-
+        [Inject]
         private readonly IGameService games;
 
-        public AdminController()
-        {
-            this.games = new GameService();
-        }
-
+        [Admin]
         public IActionResult Add()
         {
-            if (!this.IsAdmin)
-            {
-                return this.Redirect("/");
-            }
-
             return this.View();
         }
 
+        [Admin]
         [HttpPost]
         public IActionResult Add(GameAdminModel model)
         {
-            if (!this.IsAdmin)
-            {
-                return this.Redirect("/");
-            }
-
             if (!this.IsValidModel(model))
             {
-                this.ShowError(GameError);
+                this.ShowError(ErrorMessages.GameError);
                 return this.View();
             }
 
@@ -55,13 +42,9 @@
             return this.Redirect("/admin/all");
         }
 
+        [Admin]
         public IActionResult Edit(int id)
         {
-            if (!this.IsAdmin)
-            {
-                return this.Redirect("/");
-            }
-
             var game = this.games.GetById(id);
 
             if (game == null)
@@ -74,17 +57,14 @@
             return this.View();
         }
 
+        [Admin]
         [HttpPost]
         public IActionResult Edit(int id, GameAdminModel model)
         {
-            if (!this.IsAdmin)
-            {
-                return this.Redirect("/");
-            }
 
             if (!this.IsValidModel(model))
             {
-                this.ShowError(GameError);
+                this.ShowError(ErrorMessages.GameError);
                 return this.View();
             }
             
@@ -101,13 +81,9 @@
             return this.Redirect("/admin/all");
         }
 
+        [Admin]
         public IActionResult Delete(int id)
         {
-            if (!this.IsAdmin)
-            {
-                return this.Redirect("/");
-            }
-
             var game = this.games.GetById(id);
 
             if (game == null)
@@ -121,14 +97,10 @@
             return this.View();
         }
 
+        [Admin]
         [HttpPost]
         public IActionResult Destroy(int id)
         {
-            if (!this.IsAdmin)
-            {
-                return this.Redirect("/");
-            }
-
             var game = this.games.GetById(id);
 
             if (game == null)
@@ -141,13 +113,9 @@
             return this.Redirect("/admin/all");
         }
 
+        [Admin]
         public IActionResult All()
         {
-            if (!this.IsAdmin)
-            {
-                return this.Redirect("/");
-            }
-
             var allGames = this.games
                 .All()
                 .Select(g => $@"

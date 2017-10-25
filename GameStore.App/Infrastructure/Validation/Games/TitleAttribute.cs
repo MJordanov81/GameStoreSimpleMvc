@@ -2,6 +2,9 @@
 {
     using SimpleMvc.Framework.Attributes.Validation;
 
+    /// <summary>
+    /// Checks if a string starts with a capital letter.
+    /// </summary>
     public class TitleAttribute : PropertyValidationAttribute
     {
         public override bool IsValid(object value)
@@ -12,10 +15,7 @@
                 return true;
             }
 
-            return title.Length > 0
-                && char.IsUpper(title[0])
-                && title.Length >= 3
-                && title.Length <= 100;
+            return char.IsUpper(title[0]);
         }
     }
 }

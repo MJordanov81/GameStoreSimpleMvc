@@ -15,8 +15,6 @@
             this.ViewModel["show-error"] = "none";
         }
 
-        protected User Profile { get; private set; }
-
         protected void ShowError(string error)
         {
             this.ViewModel["show-error"] = "block";
@@ -34,11 +32,11 @@
 
                 using (var db = new GameStoreDbContext())
                 {
-                    this.Profile = db
+                    User user = db
                         .Users
                         .First(u => u.Email == this.User.Name);
 
-                    if (this.Profile.IsAdmin)
+                    if (user.IsAdmin)
                     {
                         this.ViewModel["userDisplay"] = "none";
                         this.ViewModel["adminDisplay"] = "flex";
@@ -46,7 +44,5 @@
                 }
             }
         }
-
-        protected bool IsAdmin => this.User.IsAuthenticated && this.Profile.IsAdmin;
     }
 }

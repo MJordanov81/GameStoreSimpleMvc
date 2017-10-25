@@ -70,14 +70,16 @@
             return true;
         }
 
-        protected void SignIn(string name)
+        protected void SignIn(string name, bool isAdmin)
         {
             this.Request.Session.Add(SessionStore.CurrentUserKey, name);
+            this.Request.Session.Add(SessionStore.IsCurrentUserAdmin, isAdmin);
         }
 
         protected void SignOut()
         {
             this.Request.Session.Remove(SessionStore.CurrentUserKey);
+            this.Request.Session.Remove(SessionStore.IsCurrentUserAdmin);
         }
 
         protected internal virtual void InitializeController()
@@ -88,7 +90,8 @@
 
             if (user != null)
             {
-                this.User = new Authentication(user);
+                bool isAdmin = this.Request.Session.Get<bool>(SessionStore.IsCurrentUserAdmin);
+                this.User = new Authentication(user, isAdmin);
             }
         }
     }

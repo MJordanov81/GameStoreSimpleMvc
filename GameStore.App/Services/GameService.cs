@@ -1,15 +1,19 @@
 ﻿namespace GameStore.App.Services
 {
     using Contracts;
-    using Data;
+    using Data.Contracts;
     using Data.Models;
     using Models.Games;
+    using SimpleMvc.Framework.Attributes;
     using System;
     using System.Collections.Generic;
     using System.Linq;
 
     public class GameService : IGameService
     {
+        [Inject]
+        private readonly IRepository repository;
+
         public void Create(
             string title,
             string description,
@@ -19,84 +23,65 @@
             string videoId,
             DateTime releaseDate)
         {
-            using (var db = new GameStoreDbContext())
+            var game = new Game
             {
-                var game = new Game
-                {
-                    Title = title,
-                    Description = description,
-                    Price = price,
-                    Size = size,
-                    ThumbnailUrl = thumbnailUrl,
-                    VideoId = videoId,
-                    ReleaseDate = releaseDate
-                };
+                Title = title,
+                Description = description,
+                Price = price,
+                Size = size,
+                ThumbnailUrl = thumbnailUrl,
+                VideoId = videoId,
+                ReleaseDate = releaseDate
+            };
 
-                db.Games.Add(game);
-                db.SaveChanges();
-            }
+            this.repository.Add(game);
         }
 
         public void Update(
-            int id, 
-            string title, 
-            string description, 
-            string thumbnailUrl, 
-            decimal price, 
-            double size, 
-            string videoId, 
+            int id,
+            string title,
+            string description,
+            string thumbnailUrl,
+            decimal price,
+            double size,
+            string videoId,
             DateTime releaseDate)
         {
-            using (var db = new GameStoreDbContext())
-            {
-                var game = db.Games.Find(id);
+            Game game = this.repository.Retrieve<Game>(id);
 
-                game.Title = title;
-                game.Description = description;
-                game.ThumbnailUrl = thumbnailUrl;
-                game.Price = price;
-                game.Size = size;
-                game.VideoId = videoId;
-                game.ReleaseDate = releaseDate;
+            game.Title = title;
+            game.Description = description;
+            game.ThumbnailUrl = thumbnailUrl;
+            game.Price = price;
+            game.Size = size;
+            game.VideoId = videoId;
+            game.ReleaseDate = releaseDate;
 
-                db.SaveChanges();
-            }
+            this.repository.Edit(game);
         }
 
         public void Delete(int id)
         {
-            using (var db = new GameStoreDbContext())
-            {
-                var game = db.Games.Find(id);
-                db.Games.Remove(game);
-
-                db.SaveChanges();
-            }
+            this.repository.Detele<Game>(id);
         }
 
         public Game GetById(int id)
         {
-            using (var db = new GameStoreDbContext())
-            {
-                return db.Games.Find(id);
-            }
+            return this.repository.Retrieve<Game>(id);
         }
 
         public IEnumerable<GameListingAdminModel> All()
         {
-            using (var db = new GameStoreDbContext())
+            return this.repository
+            .Retrieve<Game>()
+            .Select(g => new GameListingAdminModel
             {
-                return db
-                    .Games
-                    .Select(g => new GameListingAdminModel
-                    {
-                        Id = g.Id,
-                        Name = g.Title,
-                        Price = g.Price,
-                        Size = g.Size
-                    })
-                    .ToList();
-            }
+                Id = g.Id,
+                Name = g.Title,
+                Price = g.Price,
+                Size = g.Size
+            })
+            .ToList();
         }
     }
 }

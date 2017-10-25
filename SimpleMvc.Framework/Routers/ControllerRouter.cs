@@ -1,9 +1,11 @@
 ﻿namespace SimpleMvc.Framework.Routers
 {
-    using Framework.Attributes.Methods;
-    using Framework.Helpers;
-    using SimpleMvc.Framework.Contracts;
-    using SimpleMvc.Framework.Controllers;
+    using Attributes;
+    using Attributes.Authentication;
+    using Attributes.Methods;
+    using Contracts;
+    using Controllers;
+    using Helpers;
     using System;
     using System.Collections.Generic;
     using System.Linq;
@@ -17,11 +19,17 @@
     {
         private IDictionary<string, string> getParameters;
         private IDictionary<string, string> postParameters;
+        private IDictionary<Type, Type> interfaceDefaultImplementations;
         private string requestMethod;
         private Controller controllerInstance;
         private string controllerName;
         private string actionName;
         private object[] methodParameters;
+
+        public ControllerRouter(IDictionary<Type, Type> interfaceDefaultImplementations)
+        {
+            this.interfaceDefaultImplementations = interfaceDefaultImplementations;
+        }
 
         public IHttpResponse Handle(IHttpRequest request)
         {
@@ -84,7 +92,7 @@
             this.controllerName = $"{pathParts[0].Capitalize()}{MvcContext.Get.ControllerSuffix}";
             this.actionName = pathParts[1].Capitalize();
         }
-        
+
         private MethodInfo GetActionForExecution()
         {
             foreach (var method in this.GetSuitableMethods())
@@ -147,9 +155,68 @@
             }
 
             this.controllerInstance = Activator.CreateInstance(controllerType) as Controller;
+
+
+            this.InjectControllerDependencies(this.controllerInstance);
+
+
             return this.controllerInstance;
         }
-        
+
+        private void InjectControllerDependencies(object instance)
+        {
+            FieldInfo[] fields = instance
+                .GetType()
+                .GetFields(BindingFlags.NonPublic | BindingFlags.Instance)
+                .Where(f => f.GetCustomAttributes()
+                .Any(a => a.GetType() == typeof(InjectAttribute)))
+                .ToArray();
+
+            foreach (FieldInfo field in fields)
+            {
+                if (!field.FieldType.IsInterface && !field.FieldType.IsAbstract)
+                {
+                    object fieldInstance = Activator.CreateInstance(field.FieldType);
+
+                    field.SetValue(instance, fieldInstance);
+
+                    InjectControllerDependencies(fieldInstance);
+                    continue;
+                }
+
+                Type[] appTypes = Assembly
+                    .GetEntryAssembly()
+                    .GetTypes()
+                    .Where(t => field.FieldType.IsAssignableFrom(t) && !t.IsInterface)
+                    .ToArray();
+
+                if (appTypes.Length > 1)
+                {
+                    if (!this.interfaceDefaultImplementations.ContainsKey(field.FieldType))
+                    {
+                        throw new InvalidOperationException($"Please specify default implementation for interface {field.FieldType}!");
+                    }
+
+                    object fieldInstance = Activator.CreateInstance(this.interfaceDefaultImplementations[field.FieldType]);
+
+                    field.SetValue(instance, fieldInstance);
+
+                    InjectControllerDependencies(fieldInstance);
+
+                    continue;
+                }
+
+                else
+                {
+                    object fieldInstance = Activator.CreateInstance(appTypes[0]);
+
+                    field.SetValue(instance, fieldInstance);
+
+                    InjectControllerDependencies(fieldInstance);
+                }
+            }
+        }
+
         private void PrepareMethodParameters(MethodInfo methodInfo)
         {
             var parameters = methodInfo.GetParameters();
@@ -210,6 +277,13 @@
 
         private IHttpResponse GetResponse(MethodInfo method, object controller)
         {
+            bool isUserAuthorizedForAction = CheckIfUserIsAuthorized(method, controller);
+
+            if (!isUserAuthorizedForAction)
+            {
+                return new ForbiddenResponse();
+            }
+
             var actionResult = method.Invoke(controller, this.methodParameters)
                 as IActionResult;
 
@@ -228,6 +302,35 @@
             }
 
             return actionResult.Invoke();
+        }
+
+        private bool CheckIfUserIsAuthorized(MethodInfo method, object controller)
+        {
+            bool isUserAdmin = (controller as Controller).User.IsAdmin;
+
+            if (isUserAdmin)
+            {
+                return true;
+            }
+            else
+            {
+                bool isUserAuthenticated = (controller as Controller).User.IsAuthenticated;
+
+                IList<AuthenticationAttribute> attributes = method
+                    .GetCustomAttributes<AuthenticationAttribute>()
+                    .ToList();
+
+                if (attributes.Any(a => a.GetType() == typeof(AdminAttribute)))
+                {
+                    return false;
+                }
+                if (attributes.Any(a => a.GetType() == typeof(AuthenticatedAttribute)) && !isUserAuthenticated)
+                {
+                    return false;
+                }
+
+                return true;
+            }
         }
     }
 }

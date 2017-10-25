@@ -5,5 +5,7 @@
         bool Create(string email, string password, string name);
 
         bool UserExists(string email, string password);
+
+        bool IsAdmin(string email);
     }
 }

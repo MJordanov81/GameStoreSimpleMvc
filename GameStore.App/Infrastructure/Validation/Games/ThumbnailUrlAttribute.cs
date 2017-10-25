@@ -2,6 +2,9 @@
 {
     using SimpleMvc.Framework.Attributes.Validation;
 
+    /// <summary>
+    /// Checks if the string starts with 'http://' or 'https://'.
+    /// </summary>
     public class ThumbnailUrlAttribute : PropertyValidationAttribute
     {
         public override bool IsValid(object value)
