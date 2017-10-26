@@ -31,19 +31,26 @@
 
             if (this.viewData.Any())
             {
-                foreach (var data in this.viewData)
+                string htmlInitial = null;
+
+                while (true)
                 {
-                    fileHtml = fileHtml.Replace($"{{{{{{{data.Key}}}}}}}", data.Value);
+                    fileHtml = this.ReplacePlaceholders(fileHtml);
+
+                    if (htmlInitial == fileHtml)
+                    {
+                        break;
+                    }
+
+                    htmlInitial = fileHtml;
                 }
             }
 
-            return fileHtml;
+            return this.PlaceIntoLayout(fileHtml);
         }
 
         private string ReadFile()
         {
-            var layoutHtml = this.ReadLayoutFile();
-
             var templateFullFilePath = $"{this.templateFullQualifiedName}{FileExtension}";
 
             if (!File.Exists(templateFullFilePath))
@@ -52,7 +59,12 @@
                 return this.GetErrorHtml();
             }
 
-            var templateHtml = File.ReadAllText(templateFullFilePath);
+            return File.ReadAllText(templateFullFilePath);
+        }
+
+        private string PlaceIntoLayout(string templateHtml)
+        {
+            var layoutHtml = this.ReadLayoutFile();
 
             return layoutHtml.Replace(ContentPlaceholder, templateHtml);
         }
@@ -71,7 +83,12 @@
                 return this.GetErrorHtml();
             }
 
-            return File.ReadAllText(layoutHtmlFile);
+
+            string layoutHtml = File.ReadAllText(layoutHtmlFile);
+
+            layoutHtml = this.ReplacePlaceholders(layoutHtml);
+
+            return layoutHtml;
         }
 
         private string GetErrorPath()
@@ -88,6 +105,16 @@
             var errorPath = this.GetErrorPath();
             var errorHtml = File.ReadAllText(errorPath);
             return errorHtml;
+        }
+
+        private string ReplacePlaceholders(string html)
+        {
+            foreach (var data in this.viewData)
+            {
+                html = html.Replace($"{{{{{{{data.Key}}}}}}}", data.Value);
+            }
+
+            return html;
         }
     }
 }

@@ -9,7 +9,7 @@
     {
         protected BaseController()
         {
-            this.ViewModel["anonymousDisplay"] = "flex";
+            this.ViewModel["anonymousDisplay"] = "inline-block";
             this.ViewModel["userDisplay"] = "none";
             this.ViewModel["adminDisplay"] = "none";
             this.ViewModel["show-error"] = "none";
@@ -17,7 +17,7 @@
 
         protected void ShowError(string error)
         {
-            this.ViewModel["show-error"] = "block";
+            this.ViewModel["show-error"] = "inline-block";
             this.ViewModel["error"] = error;
         }
 
@@ -27,20 +27,12 @@
 
             if (this.User.IsAuthenticated)
             {
+                this.ViewModel["userDisplay"] = "inline-block";
                 this.ViewModel["anonymousDisplay"] = "none";
-                this.ViewModel["userDisplay"] = "flex";
 
-                using (var db = new GameStoreDbContext())
+                if (this.User.IsAdmin)
                 {
-                    User user = db
-                        .Users
-                        .First(u => u.Email == this.User.Name);
-
-                    if (user.IsAdmin)
-                    {
-                        this.ViewModel["userDisplay"] = "none";
-                        this.ViewModel["adminDisplay"] = "flex";
-                    }
+                    this.ViewModel["adminDisplay"] = "inline-block";
                 }
             }
         }

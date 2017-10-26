@@ -1,19 +1,16 @@
 ﻿namespace GameStore.App.Services
 {
     using Contracts;
-    using Data.Contracts;
     using Data.Models;
+    using GameStore.App.Data;
+    using Microsoft.EntityFrameworkCore;
     using Models.Games;
-    using SimpleMvc.Framework.Attributes;
     using System;
     using System.Collections.Generic;
     using System.Linq;
 
     public class GameService : IGameService
     {
-        [Inject]
-        private readonly IRepository repository;
-
         public void Create(
             string title,
             string description,
@@ -23,18 +20,22 @@
             string videoId,
             DateTime releaseDate)
         {
-            var game = new Game
+            using (var db = new GameStoreDbContext())
             {
-                Title = title,
-                Description = description,
-                Price = price,
-                Size = size,
-                ThumbnailUrl = thumbnailUrl,
-                VideoId = videoId,
-                ReleaseDate = releaseDate
-            };
+                var game = new Game
+                {
+                    Title = title,
+                    Description = description,
+                    Price = price,
+                    Size = size,
+                    ThumbnailUrl = thumbnailUrl,
+                    VideoId = videoId,
+                    ReleaseDate = releaseDate
+                };
 
-            this.repository.Add(game);
+                db.Games.Add(game);
+                db.SaveChanges();
+            }
         }
 
         public void Update(
@@ -47,41 +48,78 @@
             string videoId,
             DateTime releaseDate)
         {
-            Game game = this.repository.Retrieve<Game>(id);
+            using (var db = new GameStoreDbContext())
+            {
+                var game = db.Games.Find(id);
 
-            game.Title = title;
-            game.Description = description;
-            game.ThumbnailUrl = thumbnailUrl;
-            game.Price = price;
-            game.Size = size;
-            game.VideoId = videoId;
-            game.ReleaseDate = releaseDate;
+                game.Title = title;
+                game.Description = description;
+                game.ThumbnailUrl = thumbnailUrl;
+                game.Price = price;
+                game.Size = size;
+                game.VideoId = videoId;
+                game.ReleaseDate = releaseDate;
 
-            this.repository.Edit(game);
+                db.SaveChanges();
+            }
         }
 
         public void Delete(int id)
         {
-            this.repository.Detele<Game>(id);
+            using (var db = new GameStoreDbContext())
+            {
+                var game = db.Games.Find(id);
+                db.Games.Remove(game);
+
+                db.SaveChanges();
+            }
         }
 
         public Game GetById(int id)
         {
-            return this.repository.Retrieve<Game>(id);
+            using (var db = new GameStoreDbContext())
+            {
+                return db.Games.Find(id);
+            }
         }
 
         public IEnumerable<GameListingAdminModel> All()
         {
-            return this.repository
-            .Retrieve<Game>()
-            .Select(g => new GameListingAdminModel
+            using (var db = new GameStoreDbContext())
             {
-                Id = g.Id,
-                Name = g.Title,
-                Price = g.Price,
-                Size = g.Size
-            })
-            .ToList();
+                return db
+                    .Games
+                    .Select(g => new GameListingAdminModel
+                    {
+                        Id = g.Id,
+                        Name = g.Title,
+                        Price = g.Price,
+                        Size = g.Size
+                    })
+                    .ToList();
+            }
+        }
+
+        public IList<GameHomePageListingModel> GetFilteredGames(int userId, string filter)
+        {
+            using (GameStoreDbContext db = new GameStoreDbContext())
+            {
+                var games = db.Games.Include(g => g.Orders).ToList();
+
+                if (filter.ToLower() == "owned")
+                {
+                    games = games.Where(g => g.Orders.Select(o => o.UserId).Contains(userId)).ToList();
+                }
+
+                return games.Select(g => new GameHomePageListingModel
+                {
+                    Title = g.Title,
+                    Description = g.Description.Length > 300 ? g.Description.Substring(0, 300) + "..." : g.Description,
+                    ThumbnailUrl = g.ThumbnailUrl,
+                    Price = g.Price,
+                    Size = g.Size
+                }).ToList();
+            }
         }
     }
 }

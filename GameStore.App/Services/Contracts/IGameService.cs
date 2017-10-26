@@ -17,13 +17,13 @@
             DateTime releaseDate);
 
         void Update(
-            int id, 
-            string title, 
-            string description, 
-            string thumbnailUrl, 
-            decimal price, 
-            double size, 
-            string videoId, 
+            int id,
+            string title,
+            string description,
+            string thumbnailUrl,
+            decimal price,
+            double size,
+            string videoId,
             DateTime releaseDate);
 
         void Delete(int id);
@@ -32,6 +32,6 @@
 
         IEnumerable<GameListingAdminModel> All();
 
-
+        IList<GameHomePageListingModel> GetFilteredGames(int userId, string filter);
     }
 }

@@ -7,5 +7,7 @@
         bool UserExists(string email, string password);
 
         bool IsAdmin(string email);
+
+        int GetUserId(string email);
     }
 }

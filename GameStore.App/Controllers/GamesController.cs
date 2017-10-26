@@ -9,7 +9,7 @@
     using StaticData.Constants;
     using System.Linq;
 
-    public class AdminController : BaseController
+    public class GamesController : BaseController
     {
         [Inject]
         private readonly IGameService games;
@@ -39,7 +39,7 @@
                 model.VideoId,
                 model.ReleaseDate);
 
-            return this.Redirect("/admin/all");
+            return this.Redirect("/games/all");
         }
 
         [Admin]
@@ -78,7 +78,7 @@
                 model.VideoId,
                 model.ReleaseDate);
 
-            return this.Redirect("/admin/all");
+            return this.Redirect("/games/all");
         }
 
         [Admin]
@@ -110,7 +110,7 @@
 
             this.games.Delete(id);
 
-            return this.Redirect("/admin/all");
+            return this.Redirect("/games/all");
         }
 
         [Admin]
@@ -125,8 +125,8 @@
                         <td>{g.Size} GB</td>
                         <td>{g.Price} &euro;</td>
                         <td>
-                            <a class=""btn btn-warning btn-sm"" href=""/admin/edit?id={g.Id}"">Edit</a>
-                            <a class=""btn btn-danger btn-sm"" href=""/admin/delete?id={g.Id}"">Delete</a>
+                            <a class=""btn btn-warning btn-sm"" href=""/games/edit?id={g.Id}"">Edit</a>
+                            <a class=""btn btn-danger btn-sm"" href=""/games/delete?id={g.Id}"">Delete</a>
                         </td>
                     </tr>");
 
